@@ -11,14 +11,14 @@ go get github.com/aliyun/alibabacloud-encdb-mysql-go-client@latest
 ```
 
 ## 使用
-本驱动实现了GoLang `database/sql/driver` 系列同用接口，用户只需要配置正确的DSN并将驱动名设置为`encmysql`，即可通过统一接口连接全密态数据库。
+本驱动实现了GoLang `database/sql/driver` 系列通用接口，用户只需要配置正确的DSN并将驱动名设置为`encmysql`，即可通过统一接口连接全密态数据库。
 ```go
 mek := ...
 encAlgo := ...
 
 db, err := sql.Open("encmysql", "<username>:<password>@tcp(<hostname>:<port>)/<dbname>?MEK=<mek>&ENC_ALGO=<encAlgo>")
 ```
-其中：mek是一个16位的16进制字符串，用于表示一个256位的密钥。例如：00112233445566778899aabbccddeeff
+其中：mek是一个32位的16进制字符串，用于表示一个128位的密钥。例如：00112233445566778899aabbccddeeff
 
 encAlgo是数据加密使用的算法，有以下选择：
 - SM4_128_CBC
@@ -30,7 +30,24 @@ encAlgo是数据加密使用的算法，有以下选择：
 - AES_128_GCM
 - AES_128_ECB
 
-## 一个demo
+### 接入Web框架
+本驱动提供了和社区驱动一致的接口，可以无缝接入Gin、Gorm等框架。例如Gorm本身提供了用户使用自定义驱动的方案，参见[Gorm使用自定义Driver](https://gorm.io/docs/connecting_to_the_database.html#Customize-Driver)。
+
+下面是一个示例。业务侧仅需在初始化Gorm的阶段接入本驱动，业务代码无需改造:
+```go
+mysqlDb, err := sql.Open("encmysql", "user:password@tcp(host:port)/test?parseTime=false&MEK=00112233445566778899aabbccddeeff")
+if err != nil {
+    panic(err)
+}
+db, err := gorm.Open(mysql.New(mysql.Config{
+    Conn: mysqlDb,
+}), &gorm.Config{})
+if err != nil {
+    panic(err)
+}
+```
+
+### 一个demo
 请先设置，将测试库中的test表a、b、c列加密。
 
 为了验证您正确设置了加密规则，请用mysql社区客户端执行以下SQL，并确认看到数据加密的结果。
