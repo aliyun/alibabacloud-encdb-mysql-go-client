@@ -7,7 +7,7 @@
 
 ## 安装
 ```go
-go get github.com/aliyun/alibabacloud-encdb-mysql-go-client/v0.0.1
+go get github.com/aliyun/alibabacloud-encdb-mysql-go-client@latest
 ```
 
 ## 使用
@@ -32,40 +32,54 @@ encAlgo是数据加密使用的算法，有以下选择：
 
 ## 一个demo
 请先设置，将测试库中的test表a、b、c列加密。
+
+为了验证您正确设置了加密规则，请用mysql社区客户端执行以下SQL，并确认看到数据加密的结果。
+```sql
+create table test.test (a int, b text, c timestamp);
+insert into test.test values (1024, 'foobar', now());
+select * from test.test;
+```
+预期的结果应该是一串乱码。
+
+接下来，我们尝试用go客户端读取数据。
+
 ```go
 package main
 
 import (
- "database/sql"
- "fmt"
- _ "github.com/aliyun/alibabacloud-encdb-mysql-go-client"
+	"database/sql"
+	"fmt"
+	"time"
+
+	_ "github.com/aliyun/alibabacloud-encdb-mysql-go-client"
 )
 
 func main() {
- 
- db, err := sql.Open("encmysql", "<username>:<password>@tcp(<hostname>:<port>)/<dbname>?MEK=00112233445566778899aabbccddeeff&ENC_ALGO=SM4_128_CBC")
- if err != nil {
- panic(err)
- }
- _, err = db.Exec("DROP TABLE IF EXISTS test")
- if err != nil {
- panic(err)
- }
- _, err = db.Exec(`create table test(a int, b text, c float)`)
- if err != nil {
- panic(err)
- }
- _, err = db.Exec(`insert into test set a = 0, b = 'test', c = 0.0`)
- if err != nil {
- panic(err)
- }
- rows, err := db.Query("SELECT * FROM test")
- rows.Next()
- var a int
- var b string
- var c float32
 
- err = rows.Scan(&a, &b, &c)
- fmt.Printf("read data: %d %s %f\n", a, b, c)
+	db, err := sql.Open("encmysql", "user:password@tcp(host:port)/test?MEK=00112233445566778899aabbccddeeff&ENC_ALGO=SM4_128_CBC&parseTime=true")
+	if err != nil {
+		panic(err)
+	}
+	rows, err := db.Query("SELECT * FROM test")
+	if err != nil {
+		panic(err)
+	}
+	rows.Next()
+	var a int
+	var b string
+	var c time.Time
+
+	err = rows.Scan(&a, &b, &c)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("read data: %d %s %s\n", a, b, c.GoString())
 }
+
+```
+预期的结果应该是：
+```shell
+$ go run .
+# 日期视具体时间而定
+read data: 1024 foobar time.Date(2024, time.May, 10, 9, 44, 11, 0, time.UTC)
 ```
