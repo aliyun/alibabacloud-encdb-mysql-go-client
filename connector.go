@@ -14,6 +14,7 @@ type encmysql_connector struct {
 	Loc       *time.Location // Location for time.Time values
 	Algo      encdb_sdk.SymmAlgo
 	MEK       []byte
+	Is_polar  bool
 }
 
 func (c *encmysql_connector) Connect(ctx context.Context) (driver.Conn, error) {
@@ -27,6 +28,7 @@ func (c *encmysql_connector) Connect(ctx context.Context) (driver.Conn, error) {
 			MEK:  c.MEK,
 			Algo: c.Algo,
 		},
+		Is_polar: c.Is_polar,
 	}
 	sdk.GetServerInfo()
 	err = sdk.ProvisionMEK()

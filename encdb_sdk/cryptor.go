@@ -10,6 +10,8 @@ type AsymmAlgo string
 type SymmAlgo string
 type HashAlgo string
 
+type ServerVersion string
+
 const (
 	SM2 AsymmAlgo = "SM2"
 	RSA           = "RSA"
@@ -18,6 +20,12 @@ const (
 const (
 	SHA256 HashAlgo = "SHA256"
 	SM3             = "SM3"
+)
+
+const (
+	RDS          ServerVersion = "RDS"            // rds mysql
+	POLAR_LAGACY               = "POLARDB_LEGACY" // polardb. encdb version < 1.1.14
+	POLAR_1_1_14               = "POLARDB_1.1.14" // polar, encdb version == 1.1.14
 )
 
 const (
@@ -103,6 +111,7 @@ type Cryptor struct {
 	Server_cs       CipherSuite
 	Server_puk      string // pem format
 	Server_puk_hash string
+	Server_version  ServerVersion
 }
 
 // func (cryptor *Cryptor) encrypt(plaintext []byte) []byte {

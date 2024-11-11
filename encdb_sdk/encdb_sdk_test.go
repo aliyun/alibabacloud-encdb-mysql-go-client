@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"testing"
 
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/aliyun/alibabacloud-encdb-mysql-go-client/mysql"
 )
 
 func TestGetServerInfo(t *testing.T) {

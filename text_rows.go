@@ -34,6 +34,10 @@ func (r *encmysqlTextRows) Next(dest []driver.Value) error {
 			continue
 		}
 		type_name := r.rows.(driver.RowsColumnTypeDatabaseTypeName).ColumnTypeDatabaseTypeName(i)
+		// for PolarDB latest version, mysqlType for cipher is set to 244, unknown to mysql driver.
+		if r.cryptor.Server_version == encdb_sdk.POLAR_1_1_14 && type_name != "ENCDB_CIPHER" {
+			continue
+		}
 		is_unsigned := strings.Contains(type_name, "UNSIGNED")
 		cipher_base64_bytes, ok := dest[i].([]uint8)
 		if !ok {
