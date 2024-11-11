@@ -6,13 +6,16 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"strconv"
+	"strings"
 
 	"github.com/stretchr/objx"
 )
 
 type EncdbSDK struct {
-	Cryptor Cryptor
-	Conn    *driver.Conn
+	Cryptor  Cryptor
+	Conn     *driver.Conn
+	Is_polar bool
 }
 
 const ENCDB_SDK_VERSION = "1.2.15"
@@ -57,6 +60,35 @@ func (sdk *EncdbSDK) ImportRule(rule string) error {
 	return err
 }
 
+// return -1 if v1 < v2, 0 ==, 1 >
+func compareVersions(v1 string, v2 string) int {
+	v1parts := strings.Split(v1, ".")
+	v2parts := strings.Split(v2, ".")
+
+	maxLen := len(v1parts)
+	if len(v2parts) > maxLen {
+		maxLen = len(v2parts)
+	}
+
+	for i := 0; i < maxLen; i++ {
+		var part1, part2 int
+		if i < len(v1parts) {
+			part1, _ = strconv.Atoi(v1parts[i])
+		}
+		if i < len(v2parts) {
+			part2, _ = strconv.Atoi(v2parts[i])
+		}
+
+		if part1 > part2 {
+			return 1
+		} else if part1 < part2 {
+			return -1
+		}
+	}
+
+	return 0
+}
+
 func (sdk *EncdbSDK) GetServerInfo() {
 	request := map[string]any{
 		"request_type": REQUEST_ID_SERVER_INFO_GET,
@@ -72,6 +104,17 @@ func (sdk *EncdbSDK) GetServerInfo() {
 	sdk.Cryptor.Server_cs = *FromString(server_info.Get("server_info.cipher_suite").Str())
 	sdk.Cryptor.Server_puk = server_info.Get("server_info.public_key").Str()
 	sdk.Cryptor.Server_puk_hash = server_info.Get("server_info.public_key_hash").Str()
+
+	if !sdk.Is_polar {
+		sdk.Cryptor.Server_version = RDS
+	} else {
+		encdb_version := server_info.Get("server_info.version").Str()
+		if compareVersions(encdb_version, "1.1.14") == 0 {
+			sdk.Cryptor.Server_version = POLAR_1_1_14
+		} else {
+			sdk.Cryptor.Server_version = POLAR_LAGACY
+		}
+	}
 }
 
 func (sdk *EncdbSDK) ProvisionMEK() error {

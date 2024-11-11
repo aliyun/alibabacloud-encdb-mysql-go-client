@@ -7,7 +7,7 @@ import (
 
 	"github.com/aliyun/alibabacloud-encdb-mysql-go-client/encdb_sdk"
 
-	"github.com/go-sql-driver/mysql"
+	"github.com/aliyun/alibabacloud-encdb-mysql-go-client/mysql"
 )
 
 type EncMySQLDriver struct {
@@ -43,7 +43,21 @@ func (d *EncMySQLDriver) Open(dsn string) (driver.Conn, error) {
 			MEK:  mek,
 			Algo: encdb_sdk.SymmAlgo(algo_str),
 		},
+		Is_polar: false,
 	}
+	// check db type : polar or rds
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := db.Query("show status where VARIABLE_NAME= 'Polar_role' ")
+	if err != nil {
+		return nil, err
+	}
+	sdk.Is_polar = rows.Next()
+	rows.Close()
+	db.Close()
+
 	sdk.GetServerInfo()
 	err = sdk.ProvisionMEK()
 	if err != nil {
@@ -72,10 +86,20 @@ func (d *EncMySQLDriver) OpenConnector(dsn string) (driver.Connector, error) {
 	}
 	dsn = RemoveParamFromDSN(dsn, "MEK")
 	dsn = RemoveParamFromDSN(dsn, "ENC_ALGO")
-	mysqlConnector, err := d.mysqlDriver.OpenConnector(dsn)
+	// check db type : polar or rds
+	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		return nil, err
 	}
+	rows, err := db.Query("show status where VARIABLE_NAME= 'Polar_role' ")
+	if err != nil {
+		return nil, err
+	}
+	is_polar := rows.Next()
+	rows.Close()
+	db.Close()
+
+	mysqlConnector, err := d.mysqlDriver.OpenConnector(dsn)
 	if err != nil {
 		return nil, err
 	}
@@ -86,6 +110,7 @@ func (d *EncMySQLDriver) OpenConnector(dsn string) (driver.Connector, error) {
 		Loc:       cfg.Loc,
 		MEK:       mek,
 		Algo:      encdb_sdk.SymmAlgo(algo_str),
+		Is_polar:  is_polar,
 	}, err
 }
 

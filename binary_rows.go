@@ -34,6 +34,10 @@ func (r *encmysqlBinaryRows) Next(dest []driver.Value) error {
 			continue
 		}
 		type_name := r.rows.(driver.RowsColumnTypeDatabaseTypeName).ColumnTypeDatabaseTypeName(i)
+		// for PolarDB latest version, mysqlType for cipher is set to 244, unknown to mysql driver.
+		if r.cryptor.Server_version == encdb_sdk.POLAR_1_1_14 && type_name != "ENCDB_CIPHER" {
+			continue
+		}
 		_, scale, _ := r.rows.(driver.RowsColumnTypePrecisionScale).ColumnTypePrecisionScale(i)
 		is_unsigned := strings.Contains(type_name, "UNSIGNED")
 		cipher_bytes, ok := dest[i].([]uint8)

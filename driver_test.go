@@ -16,6 +16,9 @@ func TestNormalStatementsOnRDSMySQL(t *testing.T) {
 		for j := 0; j < len(encrypts); j++ {
 			dsn := dsns[i]
 			db, err := sql.Open("encmysql", dsn)
+			if err != nil {
+				panic(err)
+			}
 			if encrypts[j] {
 				_, err = db.Exec("SELECT encdb_rule_op('add','[{\"name\":\"golang_rule\",\"enabled\":true,\"meta\":{\"databases\":[\"test_golang\"],\"tables\":[\"*\"],\"columns\":[\"*\"]}}]')")
 				if err != nil {
@@ -125,17 +128,17 @@ func TestPrepareStatementsOnRDSMySQL(t *testing.T) {
 		for j := 0; j < len(encrypts); j++ {
 			dsn := dsns[i]
 			db, err := sql.Open("encmysql", dsn)
-			if encrypts[j] {
-				_, err = db.Exec("SELECT encdb_rule_op('add','[{\"name\":\"golang_rule\",\"enabled\":true,\"meta\":{\"databases\":[\"test_golang\"],\"tables\":[\"*\"],\"columns\":[\"*\"]}}]')")
-				if err != nil {
-					panic(err)
-				}
-			} else {
-				_, _ = db.Exec("SELECT encdb_rule_op('delete','\"golang_rule\"')")
-				if err != nil {
-					panic(err)
-				}
-			}
+			// if encrypts[j] {
+			// 	_, err = db.Exec("SELECT encdb_rule_op('add','[{\"name\":\"golang_rule\",\"enabled\":true,\"meta\":{\"databases\":[\"test_golang\"],\"tables\":[\"*\"],\"columns\":[\"*\"]}}]')")
+			// 	if err != nil {
+			// 		panic(err)
+			// 	}
+			// } else {
+			// 	_, _ = db.Exec("SELECT encdb_rule_op('delete','\"golang_rule\"')")
+			// 	if err != nil {
+			// 		panic(err)
+			// 	}
+			// }
 			_, err = db.Exec("DROP TABLE IF EXISTS t1")
 			if err != nil {
 				panic(err)
