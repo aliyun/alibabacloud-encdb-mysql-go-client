@@ -48,6 +48,17 @@ func (r *encmysqlTextRows) Next(dest []driver.Value) error {
 			continue
 		}
 		cipher_bytes, _ := base64.StdEncoding.DecodeString(cipher_base64_str)
+		// FIXME(yx): fix cipher conflict problem for RDS
+		if r.cryptor.Server_version == encdb_sdk.RDS {
+			encdb_cipher, err := encdb_sdk.ParseCipher(cipher_bytes)
+			if err != nil {
+				continue
+			}
+			algo, err := encdb_cipher.GetEncAlgo()
+			if err != nil || (algo != encdb_sdk.AES_128_GCM && algo != encdb_sdk.SM4_128_GCM) {
+				continue
+			}
+		}
 		plaintext, m_type, err := r.cryptor.Decrypt(cipher_bytes)
 		if err != nil {
 			continue
