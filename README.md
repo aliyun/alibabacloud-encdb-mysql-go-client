@@ -23,14 +23,8 @@ db, err := sql.Open("encmysql", "<username>:<password>@tcp(<hostname>:<port>)/<d
 其中：mek是一个32位的16进制字符串，用于表示一个128位的密钥。例如：00112233445566778899aabbccddeeff
 
 encAlgo是数据加密使用的算法，有以下选择：
-- SM4_128_CBC
-- SM4_128_CTR
 - SM4_128_GCM
-- SM4_128_ECB
-- AES_128_CBC
-- AES_128_CTR
 - AES_128_GCM
-- AES_128_ECB
 
 ### 接入Web框架
 本驱动提供了和社区驱动一致的接口，可以无缝接入Gin、Gorm、Xorm等框架。
